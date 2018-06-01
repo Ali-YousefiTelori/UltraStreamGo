@@ -5,8 +5,11 @@ Easy to manage file system for save,Upload and download, fast and light
 ## Features:
 
 1.Caching support
+
 2.File checksum support
+
 3.Password for file support
+
 4.FileShare.ReadWrite for multipe stream read
 
 Sample usage:
