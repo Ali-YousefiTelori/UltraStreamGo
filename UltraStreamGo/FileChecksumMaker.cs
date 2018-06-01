@@ -92,6 +92,12 @@ namespace UltraStreamGo
             return data;
         }
 
+        public static FileChecksumInfo GetFileCheckSum(string filePath)
+        {
+            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                return GetFileCheckSum(fileStream);
+        }
+
         public static byte[] GetListOfBytes(Stream stream, long position, int lenght)
         {
             stream.Seek(position, SeekOrigin.Begin);
@@ -127,5 +133,5 @@ namespace UltraStreamGo
             }
             return items;
         }
-    } 
+    }
 }

@@ -76,6 +76,13 @@ namespace UltraStreamGo
             return string.Format("{0:n0}", str).Split(',');
         }
 
+        public StreamIdentifierFileUploadResult StartUpload(FileInfo fileInfo, string filePath, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)
+        {
+            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+            {
+                return StartUpload(fileInfo, fileStream, startPosition, length, wrotePositionAction, trowException);
+            }
+        }
 
         public StreamIdentifierFileUploadResult StartUpload(FileInfo fileInfo, Stream streamForRead, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)
         {
