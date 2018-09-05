@@ -130,7 +130,6 @@ namespace UltraStreamGo
                         }
                         if (readCount == 0)
                             break;
-                        Console.WriteLine($"write {readBytes.Length} {readCount}");
                         fileStream.Write(readBytes, 0, readCount);
                         writed += readCount;
                         wrotePositionAction?.Invoke(fileStream.Position);
