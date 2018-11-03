@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Linq;
-using Newtonsoft.Json;
-using System.Collections.Concurrent;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace UltraStreamGo
 {
@@ -12,22 +13,31 @@ namespace UltraStreamGo
     {
         public static string DefaultFolderPath { get; set; }
         internal static ConcurrentDictionary<long, StreamIdentifier> UploadingStreamsByIds { get; set; } = new ConcurrentDictionary<long, StreamIdentifier>();
-        static readonly object staticLock = new object();
+
+        private static readonly object staticLock = new object();
         internal static ConcurrentDictionary<long, object> UserMemoryCacheByIds { get; set; } = new ConcurrentDictionary<long, object>();
 
 
-        FileInfo CurrentFileInfo { get; set; }
+        private FileInfo CurrentFileInfo { get; set; }
         public Action DisposedAction { get; set; }
         public bool IgnoreLastUpdateDateTime { get; set; }
-        static Random random = new Random();
+
+        private static Random random = new Random();
+
+        public static bool IsExist(long fileId)
+        {
+            string folderPath = GetFolderPath(fileId);
+            string dataPath = Path.Combine(folderPath, "data");
+            return File.Exists(dataPath);
+        }
 
         public static FileInfo GetFileInfo(long fileId, string password = null)
         {
-            var folderPath = GetFolderPath(fileId);
-            var dataPath = Path.Combine(folderPath, "data");
+            string folderPath = GetFolderPath(fileId);
+            string dataPath = Path.Combine(folderPath, "data");
             if (!File.Exists(dataPath))
                 return null;
-            var deserialize = JsonConvert.DeserializeObject<FileInfo>(File.ReadAllText(dataPath, Encoding.UTF8));
+            FileInfo deserialize = JsonConvert.DeserializeObject<FileInfo>(File.ReadAllText(dataPath, Encoding.UTF8));
             if (deserialize.Password != password)
                 return null;
             return deserialize;
@@ -41,17 +51,17 @@ namespace UltraStreamGo
 
         public static string GetFilePath(long fileId)
         {
-            var folderPath = GetFolderPath(fileId);
+            string folderPath = GetFolderPath(fileId);
             return Path.Combine(folderPath, "file");
         }
 
         public static Stream GetFileStream(long fileId, long startPosition)
         {
-            var folderPath = GetFolderPath(fileId);
-            var filePath = Path.Combine(folderPath, "file");
+            string folderPath = GetFolderPath(fileId);
+            string filePath = Path.Combine(folderPath, "file");
             if (!File.Exists(filePath))
                 return null;
-            var stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+            FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             stream.Seek(startPosition, SeekOrigin.Begin);
             return stream;
         }
@@ -65,18 +75,20 @@ namespace UltraStreamGo
         {
             if (fileId <= 0)
                 throw new Exception("Id cannot be zero or lower!");
-            var folders = Split(fileId).ToList();
+            else if (string.IsNullOrEmpty(DefaultFolderPath))
+                throw new Exception("DefaultFolderPath is not set please set StreamIdentifier.DefaultFolderPath sa your default save folder path");
+            List<string> folders = Split(fileId).ToList();
             folders.Insert(0, DefaultFolderPath);
             folders.Add("0");
             return Path.Combine(folders.ToArray());
         }
 
-        static string[] Split(long str)
+        private static string[] Split(long str)
         {
             return string.Format("{0:n0}", str).Split(',');
         }
 
-        public StreamIdentifierFileUploadResult StartUpload(FileInfo fileInfo, string filePath, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)
+        public Task<StreamIdentifierFileUploadResult> StartUpload(FileInfo fileInfo, string filePath, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)
         {
             using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
             {
@@ -84,7 +96,7 @@ namespace UltraStreamGo
             }
         }
 
-        public StreamIdentifierFileUploadResult StartUpload(FileInfo fileInfo, Stream streamForRead, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)
+        public async Task<StreamIdentifierFileUploadResult> StartUpload(FileInfo fileInfo, Stream streamForRead, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)
         {
             try
             {
@@ -101,14 +113,13 @@ namespace UltraStreamGo
                 if (haveToRemove)
                     disposeStreamIdentifier.Dispose();
 
-                var folderPath = GetFolderPath(fileInfo.Id);
+                string folderPath = GetFolderPath(fileInfo.Id);
 
                 if (!Directory.Exists(folderPath))
                     Directory.CreateDirectory(folderPath);
-                var filePath = Path.Combine(folderPath, "file");
-                var dataPath = Path.Combine(folderPath, "data");
+                string filePath = Path.Combine(folderPath, "file");
+                string dataPath = Path.Combine(folderPath, "data");
                 SaveFileInfoToFile(dataPath, true);
-                Console.WriteLine($"len {length}");
                 using (FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite))
                 {
                     fileStream.Seek(startPosition, SeekOrigin.Begin);
@@ -121,14 +132,14 @@ namespace UltraStreamGo
                         {
                             if (readBytes.Length > length - writed)
                                 readBytes = new byte[length - writed];
-                            readCount = streamForRead.Read(readBytes, 0, readBytes.Length);
+                            readCount = await streamForRead.ReadAsync(readBytes, 0, readBytes.Length);
                         }
                         catch (Exception ex)
                         {
                             Console.WriteLine("read exception : " + ex.ToString());
                             break;
                         }
-                        if (readCount == 0)
+                        if (readCount <= 0)
                             break;
                         fileStream.Write(readBytes, 0, readCount);
                         writed += readCount;
@@ -143,10 +154,10 @@ namespace UltraStreamGo
                         fileStream.Seek(0, SeekOrigin.Begin);
                         if (fileInfo.FileChecksumInfo != null)
                         {
-                            var checkSum = FileChecksumMaker.GetFileCheckSum(fileStream);
+                            FileChecksumInfo checkSum = FileChecksumMaker.GetFileCheckSum(fileStream);
                             if (checkSum != null)
                             {
-                                var errors = FileChecksumMaker.GetErrorsFromTwoCheckSum(checkSum, fileInfo.FileChecksumInfo);
+                                List<CheckSumItemInfo> errors = FileChecksumMaker.GetErrorsFromTwoCheckSum(checkSum, fileInfo.FileChecksumInfo);
                                 if (errors.Count == 0)
                                 {
                                     fileInfo.IsComplete = true;
@@ -195,8 +206,7 @@ namespace UltraStreamGo
             }
         }
 
-
-        void SaveFileInfoToFile(string dataPath, bool isFirstTime)
+        private void SaveFileInfoToFile(string dataPath, bool isFirstTime)
         {
             if (!isFirstTime || !File.Exists(dataPath))
                 File.WriteAllText(dataPath, JsonConvert.SerializeObject(CurrentFileInfo), Encoding.UTF8);
@@ -224,7 +234,7 @@ namespace UltraStreamGo
                 result = null;
                 return false;
             }
-            var exist = UserMemoryCacheByIds.TryGetValue(fileId.Value, out object value);
+            bool exist = UserMemoryCacheByIds.TryGetValue(fileId.Value, out object value);
             result = (T)value;
             return exist;
         }
@@ -244,11 +254,12 @@ namespace UltraStreamGo
             UserMemoryCacheByIds.TryRemove(fileId.Value, out object value);
         }
 
-        bool isDisposed = false;
+        private bool isDisposed = false;
         public void Dispose()
         {
             isDisposed = true;
-            UploadingStreamsByIds.TryRemove(CurrentFileInfo.Id, out StreamIdentifier streamIdentifier);
+            if (CurrentFileInfo != null)
+                UploadingStreamsByIds.TryRemove(CurrentFileInfo.Id, out StreamIdentifier streamIdentifier);
             DisposedAction?.Invoke();
         }
     }

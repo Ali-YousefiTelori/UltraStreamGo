@@ -68,7 +68,7 @@ namespace UltraStreamGo
                     while (!isDisposed)
                     {
                         var readCount = streamToSave.Read(readBytes, 0, readBytes.Length);
-                        if (readCount == 0)
+                        if (readCount <= 0)
                             break;
                         fileStream.Write(readBytes, 0, readCount);
                         writed += readCount;

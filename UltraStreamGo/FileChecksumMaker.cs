@@ -47,7 +47,7 @@ namespace UltraStreamGo
                     read.AddRange(readBytes);
                     break;
                 }
-                else if (readCount == 0)
+                else if (readCount <= 0)
                 {
                     if (read.Count + pos >= len)
                         break;
@@ -56,7 +56,7 @@ namespace UltraStreamGo
                 {
                     totalRead -= readCount;
                     read.AddRange(readBytes.ToList().GetRange(0, readCount));
-                    if (totalRead == 0)
+                    if (totalRead <= 0)
                         break;
                 }
             }
