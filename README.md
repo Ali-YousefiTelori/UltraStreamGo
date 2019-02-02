@@ -2,13 +2,13 @@
 UltraStreamGo is a lightweight and fast library to easily manage file system objects for saving, uploading and downloading tasks.
 
 
-## Features:
+## Built-in features:
 
 1. Caching for lightning speed
 
 2. File checksum for content integrity
 
-3. Password for file protection
+3. Password for data protection
 
 4. FileShare. ReadWrite for multipe stream read
 
