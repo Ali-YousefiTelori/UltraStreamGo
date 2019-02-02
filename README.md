@@ -1,5 +1,5 @@
 # UltraStreamGo
-UltrastreamGo is lightweight and fast library to easily manage file system objects to save, ppload and download
+UltraStreamGo is a lightweight and fast library to easily manage file system objects for saving, uploading and downloading tasks.
 
 
 ## Features:
