@@ -1,16 +1,16 @@
 # UltraStreamGo
-Easy to manage file system for save,Upload and download, fast and light
+UltrastreamGo is lightweight and fast library to easily manage file system objects to save, ppload and download
 
 
 ## Features:
 
-1.Caching support
+1. Caching for lightning speed
 
-2.File checksum support
+2. File checksum for content integrity
 
-3.Password for file support
+3. Password for file protection
 
-4.FileShare.ReadWrite for multipe stream read
+4. FileShare. ReadWrite for multipe stream read
 
 Sample usage:
 
