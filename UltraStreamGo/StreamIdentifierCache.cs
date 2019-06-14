@@ -55,11 +55,11 @@ namespace UltraStreamGo
 
                 var folderPath = GetCachFolderPath(fileInfoCache.Id);
 
-                if (!Directory.Exists(folderPath))
-                    Directory.CreateDirectory(folderPath);
+                if (!CrossDirectoryInfo.Current.Exists(folderPath))
+                    CrossDirectoryInfo.Current.CreateDirectory(folderPath);
                 var filePath = Path.Combine(folderPath, "file");
                 var dataPath = Path.Combine(folderPath, "data");
-                File.WriteAllText(dataPath, JsonConvert.SerializeObject(fileInfoCache), Encoding.UTF8);
+                CrossFileInfo.Current.WriteAllText(dataPath, JsonConvert.SerializeObject(fileInfoCache), Encoding.UTF8);
                 using (FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite))
                 {
                     fileStream.Seek(startPosition, SeekOrigin.Begin);

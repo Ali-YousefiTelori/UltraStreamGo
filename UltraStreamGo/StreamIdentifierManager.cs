@@ -15,11 +15,11 @@ namespace UltraStreamGo
             var dataCachePath = Path.Combine(cacheFolder, "data");
 
             var saveFolder = StreamIdentifier.GetFolderPath(fileId);
-            if (Directory.Exists(saveFolder))
+            if (CrossDirectoryInfo.Current.Exists(saveFolder))
                 throw new Exception("directory exist!");
-            Directory.CreateDirectory(saveFolder);
-            File.Move(fileCachePath, Path.Combine(saveFolder, "file"));
-            var dataCache = JsonConvert.DeserializeObject<FileInfoCache>(File.ReadAllText(dataCachePath, Encoding.UTF8));
+            CrossDirectoryInfo.Current.CreateDirectory(saveFolder);
+            CrossFileInfo.Current.Move(fileCachePath, Path.Combine(saveFolder, "file"));
+            var dataCache = JsonConvert.DeserializeObject<FileInfoCache>(CrossFileInfo.Current.ReadAllText(dataCachePath, Encoding.UTF8));
 
             FileInfo fileInfo = new FileInfo()
             {
@@ -30,7 +30,7 @@ namespace UltraStreamGo
                 IsComplete = true,
                 DataType = dataCache.DataType
             };
-            File.WriteAllText(Path.Combine(saveFolder, "data"), JsonConvert.SerializeObject(fileInfo), Encoding.UTF8);
+            CrossFileInfo.Current.WriteAllText(Path.Combine(saveFolder, "data"), JsonConvert.SerializeObject(fileInfo), Encoding.UTF8);
             DeleteFolder(cacheId);
         }
 
@@ -42,8 +42,8 @@ namespace UltraStreamGo
 
                 while (saveFolder.Length > StreamIdentifierCache.DefaultCacheFolderPath.Length)
                 {
-                    if (Directory.GetDirectories(saveFolder).Length == 0)
-                        Directory.Delete(saveFolder, true);
+                    if (CrossDirectoryInfo.Current.GetDirectories(saveFolder).Length == 0)
+                        CrossDirectoryInfo.Current.Delete(saveFolder, true);
                     else
                         break;
                     saveFolder = Path.GetDirectoryName(saveFolder);
@@ -64,8 +64,8 @@ namespace UltraStreamGo
 
                 while (saveFolder.Length > StreamIdentifier.DefaultFolderPath.Length)
                 {
-                    if (Directory.GetDirectories(saveFolder).Length == 0)
-                        Directory.Delete(saveFolder, true);
+                    if (CrossDirectoryInfo.Current.GetDirectories(saveFolder).Length == 0)
+                        CrossDirectoryInfo.Current.Delete(saveFolder, true);
                     else
                         break;
                     saveFolder = Path.GetDirectoryName(saveFolder);

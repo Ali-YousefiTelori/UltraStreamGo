@@ -28,16 +28,28 @@ namespace UltraStreamGo
         {
             string folderPath = GetFolderPath(fileId);
             string dataPath = Path.Combine(folderPath, "data");
-            return File.Exists(dataPath);
+            return CrossFileInfo.Current.Exists(dataPath);
+        }
+
+        public static bool IsExist(long fileId, string password)
+        {
+            string folderPath = GetFolderPath(fileId);
+            string dataPath = Path.Combine(folderPath, "data");
+            if (!CrossFileInfo.Current.Exists(dataPath))
+                return false;
+            FileInfo deserialize = JsonConvert.DeserializeObject<FileInfo>(CrossFileInfo.Current.ReadAllText(dataPath, Encoding.UTF8));
+            if (deserialize.Password != password)
+                return false;
+            return true;
         }
 
         public static FileInfo GetFileInfo(long fileId, string password = null)
         {
             string folderPath = GetFolderPath(fileId);
             string dataPath = Path.Combine(folderPath, "data");
-            if (!File.Exists(dataPath))
+            if (!CrossFileInfo.Current.Exists(dataPath))
                 return null;
-            FileInfo deserialize = JsonConvert.DeserializeObject<FileInfo>(File.ReadAllText(dataPath, Encoding.UTF8));
+            FileInfo deserialize = JsonConvert.DeserializeObject<FileInfo>(CrossFileInfo.Current.ReadAllText(dataPath, Encoding.UTF8));
             if (deserialize.Password != password)
                 return null;
             return deserialize;
@@ -59,7 +71,7 @@ namespace UltraStreamGo
         {
             string folderPath = GetFolderPath(fileId);
             string filePath = Path.Combine(folderPath, "file");
-            if (!File.Exists(filePath))
+            if (!CrossFileInfo.Current.Exists(filePath))
                 return null;
             FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             stream.Seek(startPosition, SeekOrigin.Begin);
@@ -115,8 +127,8 @@ namespace UltraStreamGo
 
                 string folderPath = GetFolderPath(fileInfo.Id);
 
-                if (!Directory.Exists(folderPath))
-                    Directory.CreateDirectory(folderPath);
+                if (!CrossDirectoryInfo.Current.Exists(folderPath))
+                    CrossDirectoryInfo.Current.CreateDirectory(folderPath);
                 string filePath = Path.Combine(folderPath, "file");
                 string dataPath = Path.Combine(folderPath, "data");
                 SaveFileInfoToFile(dataPath, true);
@@ -208,8 +220,8 @@ namespace UltraStreamGo
 
         private void SaveFileInfoToFile(string dataPath, bool isFirstTime)
         {
-            if (!isFirstTime || !File.Exists(dataPath))
-                File.WriteAllText(dataPath, JsonConvert.SerializeObject(CurrentFileInfo), Encoding.UTF8);
+            if (!isFirstTime || !CrossFileInfo.Current.Exists(dataPath))
+                CrossFileInfo.Current.WriteAllText(dataPath, JsonConvert.SerializeObject(CurrentFileInfo), Encoding.UTF8);
         }
 
         public static void AddObjectToMemoryCache(long? fileId, object value)
