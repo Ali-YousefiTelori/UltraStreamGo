@@ -9,47 +9,48 @@ using System.Threading.Tasks;
 
 namespace UltraStreamGo
 {
-    public class StreamIdentifier : IDisposable
+    public class StreamIdentifier<TId> : IDisposable
     {
         public static string DefaultFolderPath { get; set; }
-        internal static ConcurrentDictionary<long, StreamIdentifier> UploadingStreamsByIds { get; set; } = new ConcurrentDictionary<long, StreamIdentifier>();
+        internal static ConcurrentDictionary<TId, StreamIdentifier<TId>> UploadingStreamsByIds { get; set; } = new ConcurrentDictionary<TId, StreamIdentifier<TId>>();
 
         private static readonly object staticLock = new object();
-        internal static ConcurrentDictionary<long, object> UserMemoryCacheByIds { get; set; } = new ConcurrentDictionary<long, object>();
+        internal static ConcurrentDictionary<TId, object> UserMemoryCacheByIds { get; set; } = new ConcurrentDictionary<TId, object>();
+        public static int PartsLength { get; set; }
+        public static string RemoveChars { get; set; }
 
-
-        private FileInfo CurrentFileInfo { get; set; }
+        private FileInfo<TId> CurrentFileInfo { get; set; }
         public Action DisposedAction { get; set; }
         public bool IgnoreLastUpdateDateTime { get; set; }
 
         private static Random random = new Random();
 
-        public static bool IsExist(long fileId)
+        public static bool IsExist(TId fileId)
         {
             string folderPath = GetFolderPath(fileId);
             string dataPath = Path.Combine(folderPath, "data");
             return CrossFileInfo.Current.Exists(dataPath);
         }
 
-        public static bool IsExist(long fileId, string password)
+        public static bool IsExist(TId fileId, string password)
         {
             string folderPath = GetFolderPath(fileId);
             string dataPath = Path.Combine(folderPath, "data");
             if (!CrossFileInfo.Current.Exists(dataPath))
                 return false;
-            FileInfo deserialize = JsonConvert.DeserializeObject<FileInfo>(CrossFileInfo.Current.ReadAllText(dataPath, Encoding.UTF8));
+            FileInfo<TId> deserialize = JsonConvert.DeserializeObject<FileInfo<TId>>(CrossFileInfo.Current.ReadAllText(dataPath, Encoding.UTF8));
             if (deserialize.Password != password)
                 return false;
             return true;
         }
 
-        public static FileInfo GetFileInfo(long fileId, string password = null)
+        public static FileInfo<TId> GetFileInfo(TId fileId, string password = null)
         {
             string folderPath = GetFolderPath(fileId);
-            string dataPath = Path.Combine(folderPath, "data");
+            string dataPath = System.IO.Path.Combine(folderPath, "data");
             if (!CrossFileInfo.Current.Exists(dataPath))
                 return null;
-            FileInfo deserialize = JsonConvert.DeserializeObject<FileInfo>(CrossFileInfo.Current.ReadAllText(dataPath, Encoding.UTF8));
+            FileInfo<TId> deserialize = JsonConvert.DeserializeObject<FileInfo<TId>>(CrossFileInfo.Current.ReadAllText(dataPath, Encoding.UTF8));
             if (deserialize.Password != password)
                 return null;
             return deserialize;
@@ -61,16 +62,16 @@ namespace UltraStreamGo
             return new string(Enumerable.Repeat(chars, count).Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        public static string GetFilePath(long fileId)
+        public static string GetFilePath(TId fileId)
         {
             string folderPath = GetFolderPath(fileId);
-            return Path.Combine(folderPath, "file");
+            return System.IO.Path.Combine(folderPath, "file");
         }
 
-        public static Stream GetFileStream(long fileId, long startPosition)
+        public static System.IO.Stream GetFileStream(TId fileId, long startPosition)
         {
             string folderPath = GetFolderPath(fileId);
-            string filePath = Path.Combine(folderPath, "file");
+            string filePath = System.IO.Path.Combine(folderPath, "file");
             if (!CrossFileInfo.Current.Exists(filePath))
                 return null;
             FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
@@ -78,29 +79,30 @@ namespace UltraStreamGo
             return stream;
         }
 
-        public static bool DeleteFile(long fileId)
+        public static bool DeleteFile(TId fileId)
         {
-            return StreamIdentifierManager.DeleteFolder(fileId);
+            return StreamIdentifierManager<TId>.DeleteFolder(fileId);
         }
 
-        internal static string GetFolderPath(long fileId)
+        internal static string GetFolderPath(TId fileId)
         {
-            if (fileId <= 0)
-                throw new Exception("Id cannot be zero or lower!");
-            else if (string.IsNullOrEmpty(DefaultFolderPath))
+            if (string.IsNullOrEmpty(DefaultFolderPath))
                 throw new Exception("DefaultFolderPath is not set please set StreamIdentifier.DefaultFolderPath sa your default save folder path");
-            List<string> folders = Split(fileId).ToList();
+            List<string> folders = SplitInParts(fileId, PartsLength).ToList();
             folders.Insert(0, DefaultFolderPath);
             folders.Add("0");
             return Path.Combine(folders.ToArray());
         }
 
-        private static string[] Split(long str)
+        public static IEnumerable<string> SplitInParts(TId data, int partLength)
         {
-            return string.Format("{0:n0}", str).Split(',');
+            var text = data.ToString();
+            text = text.Replace(RemoveChars, "");
+            for (var i = 0; i < text.Length; i += partLength)
+                yield return text.Substring(i, Math.Min(partLength, text.Length - i));
         }
 
-        public Task<StreamIdentifierFileUploadResult> StartUpload(FileInfo fileInfo, string filePath, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)
+        public Task<StreamIdentifierFileUploadResult> StartUpload(FileInfo<TId> fileInfo, string filePath, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)
         {
             using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
             {
@@ -108,13 +110,13 @@ namespace UltraStreamGo
             }
         }
 
-        public async Task<StreamIdentifierFileUploadResult> StartUpload(FileInfo fileInfo, Stream streamForRead, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)
+        public async Task<StreamIdentifierFileUploadResult> StartUpload(FileInfo<TId> fileInfo, Stream streamForRead, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)
         {
             try
             {
                 CurrentFileInfo = fileInfo;
                 bool haveToRemove = false;
-                StreamIdentifier disposeStreamIdentifier = null;
+                StreamIdentifier<TId> disposeStreamIdentifier = null;
                 lock (staticLock)
                 {
                     if (UploadingStreamsByIds.TryGetValue(fileInfo.Id, out disposeStreamIdentifier))
@@ -224,21 +226,21 @@ namespace UltraStreamGo
                 CrossFileInfo.Current.WriteAllText(dataPath, JsonConvert.SerializeObject(CurrentFileInfo), Encoding.UTF8);
         }
 
-        public static void AddObjectToMemoryCache(long? fileId, object value)
+        public static void AddObjectToMemoryCache(TId fileId, object value)
         {
             if (fileId == null)
                 return;
-            UserMemoryCacheByIds[fileId.Value] = value;
+            UserMemoryCacheByIds[fileId] = value;
         }
 
-        public static bool ExistOnMemoryCache(long? fileId)
+        public static bool ExistOnMemoryCache(TId fileId)
         {
             if (fileId == null)
                 return false;
-            return UserMemoryCacheByIds.ContainsKey(fileId.Value);
+            return UserMemoryCacheByIds.ContainsKey(fileId);
         }
 
-        public static bool ExistOnMemoryCache<T>(long? fileId, out T result)
+        public static bool ExistOnMemoryCache<T>(TId fileId, out T result)
               where T : class
         {
             if (fileId == null)
@@ -246,24 +248,24 @@ namespace UltraStreamGo
                 result = null;
                 return false;
             }
-            bool exist = UserMemoryCacheByIds.TryGetValue(fileId.Value, out object value);
+            bool exist = UserMemoryCacheByIds.TryGetValue(fileId, out object value);
             result = (T)value;
             return exist;
         }
 
-        public static T GetValueFromMemoryCache<T>(long? fileId)
+        public static T GetValueFromMemoryCache<T>(TId fileId)
             where T : class
         {
             if (fileId == null)
                 return null;
-            return (T)UserMemoryCacheByIds[fileId.Value];
+            return (T)UserMemoryCacheByIds[fileId];
         }
 
-        public static void RemoveFromMemoryCache(long? fileId)
+        public static void RemoveFromMemoryCache(TId fileId)
         {
             if (fileId == null)
                 return;
-            UserMemoryCacheByIds.TryRemove(fileId.Value, out object value);
+            UserMemoryCacheByIds.TryRemove(fileId, out object value);
         }
 
         private bool isDisposed = false;
@@ -271,7 +273,7 @@ namespace UltraStreamGo
         {
             isDisposed = true;
             if (CurrentFileInfo != null)
-                UploadingStreamsByIds.TryRemove(CurrentFileInfo.Id, out StreamIdentifier streamIdentifier);
+                UploadingStreamsByIds.TryRemove(CurrentFileInfo.Id, out StreamIdentifier<TId> streamIdentifier);
             DisposedAction?.Invoke();
         }
     }

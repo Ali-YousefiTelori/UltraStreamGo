@@ -2,9 +2,9 @@
 
 namespace UltraStreamGo
 {
-    public class FileInfo
+    public class FileInfo<TId>
     {
-        public long Id { get; set; }
+        public TId Id { get; set; }
         public string FileName { get; set; }
         public string Extension
         {

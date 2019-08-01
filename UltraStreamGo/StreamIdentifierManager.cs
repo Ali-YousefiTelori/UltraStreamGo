@@ -6,22 +6,22 @@ using System.Text;
 
 namespace UltraStreamGo
 {
-    public static class StreamIdentifierManager
+    public static class StreamIdentifierManager<TId>
     {
-        public static void MoveCacheToFile(Guid cacheId, long fileId)
+        public static void MoveCacheToFile(Guid cacheId, TId fileId)
         {
             var cacheFolder = StreamIdentifierCache.GetCachFolderPath(cacheId);
             var fileCachePath = Path.Combine(cacheFolder, "file");
             var dataCachePath = Path.Combine(cacheFolder, "data");
 
-            var saveFolder = StreamIdentifier.GetFolderPath(fileId);
+            var saveFolder = StreamIdentifier<TId>.GetFolderPath(fileId);
             if (CrossDirectoryInfo.Current.Exists(saveFolder))
                 throw new Exception("directory exist!");
             CrossDirectoryInfo.Current.CreateDirectory(saveFolder);
             CrossFileInfo.Current.Move(fileCachePath, Path.Combine(saveFolder, "file"));
             var dataCache = JsonConvert.DeserializeObject<FileInfoCache>(CrossFileInfo.Current.ReadAllText(dataCachePath, Encoding.UTF8));
 
-            FileInfo fileInfo = new FileInfo()
+            FileInfo<TId> fileInfo = new FileInfo<TId>()
             {
                 CreatedDateTime = DateTime.Now,
                 Id = fileId,
@@ -56,13 +56,13 @@ namespace UltraStreamGo
             }
         }
 
-        internal static bool DeleteFolder(long fileId)
+        internal static bool DeleteFolder(TId fileId)
         {
             try
             {
-                var saveFolder = StreamIdentifier.GetFolderPath(fileId);
+                var saveFolder = StreamIdentifier<TId>.GetFolderPath(fileId);
 
-                while (saveFolder.Length > StreamIdentifier.DefaultFolderPath.Length)
+                while (saveFolder.Length > StreamIdentifier<TId>.DefaultFolderPath.Length)
                 {
                     if (CrossDirectoryInfo.Current.GetDirectories(saveFolder).Length == 0)
                         CrossDirectoryInfo.Current.Delete(saveFolder, true);
