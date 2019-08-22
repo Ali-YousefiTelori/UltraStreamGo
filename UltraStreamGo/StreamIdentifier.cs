@@ -16,8 +16,8 @@ namespace UltraStreamGo
 
         private static readonly object staticLock = new object();
         internal static ConcurrentDictionary<TId, object> UserMemoryCacheByIds { get; set; } = new ConcurrentDictionary<TId, object>();
-        public static int PartsLength { get; set; }
-        public static string RemoveChars { get; set; }
+        public static int PartsLength { get; set; } = 3;
+        public static string RemoveChars { get; set; } = "";
 
         private FileInfo<TId> CurrentFileInfo { get; set; }
         public Action DisposedAction { get; set; }
@@ -97,7 +97,8 @@ namespace UltraStreamGo
         public static IEnumerable<string> SplitInParts(TId data, int partLength)
         {
             var text = data.ToString();
-            text = text.Replace(RemoveChars, "");
+            if (!string.IsNullOrEmpty(RemoveChars))
+                text = text.Replace(RemoveChars, "");
             for (var i = 0; i < text.Length; i += partLength)
                 yield return text.Substring(i, Math.Min(partLength, text.Length - i));
         }
