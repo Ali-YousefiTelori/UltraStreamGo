@@ -1,9 +1,8 @@
 D:\Github\UltraStreamGo\UltraStreamGo\bin\Debug\netstandard2.0\UltraStreamGo.deps.json
 D:\Github\UltraStreamGo\UltraStreamGo\bin\Debug\netstandard2.0\UltraStreamGo.dll
 D:\Github\UltraStreamGo\UltraStreamGo\bin\Debug\netstandard2.0\UltraStreamGo.pdb
-D:\Github\UltraStreamGo\UltraStreamGo\obj\Debug\netstandard2.0\UltraStreamGo.csprojAssemblyReference.cache
-D:\Github\UltraStreamGo\UltraStreamGo\obj\Debug\netstandard2.0\UltraStreamGo.csproj.CoreCompileInputs.cache
 D:\Github\UltraStreamGo\UltraStreamGo\obj\Debug\netstandard2.0\UltraStreamGo.AssemblyInfoInputs.cache
 D:\Github\UltraStreamGo\UltraStreamGo\obj\Debug\netstandard2.0\UltraStreamGo.AssemblyInfo.cs
 D:\Github\UltraStreamGo\UltraStreamGo\obj\Debug\netstandard2.0\UltraStreamGo.dll
 D:\Github\UltraStreamGo\UltraStreamGo\obj\Debug\netstandard2.0\UltraStreamGo.pdb
+D:\Github\UltraStreamGo\UltraStreamGo\obj\Debug\netstandard2.0\UltraStreamGo.csprojAssemblyReference.cache

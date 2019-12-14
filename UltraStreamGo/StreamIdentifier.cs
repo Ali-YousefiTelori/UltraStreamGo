@@ -11,6 +11,7 @@ namespace UltraStreamGo
 {
     public class StreamIdentifier<TId> : IDisposable
     {
+        public static bool IsCaseSensitive { get; set; } = true;
         public static string DefaultFolderPath { get; set; }
         internal static ConcurrentDictionary<TId, StreamIdentifier<TId>> UploadingStreamsByIds { get; set; } = new ConcurrentDictionary<TId, StreamIdentifier<TId>>();
 
@@ -39,8 +40,17 @@ namespace UltraStreamGo
             if (!CrossFileInfo.Current.Exists(dataPath))
                 return false;
             FileInfo<TId> deserialize = JsonConvert.DeserializeObject<FileInfo<TId>>(CrossFileInfo.Current.ReadAllText(dataPath, Encoding.UTF8));
-            if (deserialize.Password != password)
-                return false;
+            if (IsCaseSensitive)
+            {
+                if (deserialize.Password != password)
+                    return false;
+            }
+            else
+            {
+                if (!string.Equals(deserialize.Password, password, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
             return true;
         }
 
@@ -51,8 +61,16 @@ namespace UltraStreamGo
             if (!CrossFileInfo.Current.Exists(dataPath))
                 return null;
             FileInfo<TId> deserialize = JsonConvert.DeserializeObject<FileInfo<TId>>(CrossFileInfo.Current.ReadAllText(dataPath, Encoding.UTF8));
-            if (deserialize.Password != password)
-                return null;
+            if (IsCaseSensitive)
+            {
+                if (deserialize.Password != password)
+                    return null;
+            }
+            else
+            {
+                if (!string.Equals(deserialize.Password, password, StringComparison.OrdinalIgnoreCase))
+                    return null;
+            }
             return deserialize;
         }
 
