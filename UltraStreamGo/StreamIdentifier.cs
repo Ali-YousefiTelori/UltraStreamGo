@@ -50,7 +50,8 @@ namespace UltraStreamGo
                 if (!string.Equals(deserialize.Password, password, StringComparison.OrdinalIgnoreCase))
                     return false;
             }
-
+            if (deserialize.IsArchived)
+                return false;
             return true;
         }
 
@@ -71,6 +72,8 @@ namespace UltraStreamGo
                 if (!string.Equals(deserialize.Password, password, StringComparison.OrdinalIgnoreCase))
                     return null;
             }
+            if (deserialize.IsArchived)
+                return null;
             return deserialize;
         }
 
@@ -92,7 +95,7 @@ namespace UltraStreamGo
             string filePath = System.IO.Path.Combine(folderPath, "file");
             if (!CrossFileInfo.Current.Exists(filePath))
                 return null;
-            FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+            FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             stream.Seek(startPosition, SeekOrigin.Begin);
             return stream;
         }
@@ -119,6 +122,20 @@ namespace UltraStreamGo
                 text = text.Replace(RemoveChars, "");
             for (var i = 0; i < text.Length; i += partLength)
                 yield return text.Substring(i, Math.Min(partLength, text.Length - i));
+        }
+
+        public static bool ArchiveFile(TId fileId, string password = null)
+        {
+            var fileInfo = GetFileInfo(fileId, password);
+            if (fileInfo == null)
+                return false;
+            fileInfo.IsArchived = true;
+            string folderPath = GetFolderPath(fileInfo.Id);
+            if (!CrossDirectoryInfo.Current.Exists(folderPath))
+                CrossDirectoryInfo.Current.CreateDirectory(folderPath);
+            string dataPath = Path.Combine(folderPath, "data");
+            CrossFileInfo.Current.WriteAllText(dataPath, JsonConvert.SerializeObject(fileInfo), Encoding.UTF8);
+            return true;
         }
 
         public Task<StreamIdentifierFileUploadResult> StartUpload(FileInfo<TId> fileInfo, string filePath, long startPosition, long length, Action<long> wrotePositionAction = null, bool trowException = false)

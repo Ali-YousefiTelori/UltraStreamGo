@@ -18,6 +18,7 @@ namespace UltraStreamGo
         public DateTime LastUpdateDateTime { get; set; }
         public long FileSize { get; set; }
         public FileChecksumInfo FileChecksumInfo { get; set; }
+        public bool IsArchived { get; set; }
         public bool IsComplete { get; set; }
         public string Password { get; set; }
     }
