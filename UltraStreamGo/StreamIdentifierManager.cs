@@ -8,13 +8,13 @@ namespace UltraStreamGo
 {
     public static class StreamIdentifierManager<TId>
     {
-        public static void MoveCacheToFile(Guid cacheId, TId fileId)
+        public static void MoveCacheToFile(StreamIdentifier<TId>  streamIdentifier,Guid cacheId, TId fileId)
         {
             var cacheFolder = StreamIdentifierCache.GetCachFolderPath(cacheId);
             var fileCachePath = Path.Combine(cacheFolder, "file");
             var dataCachePath = Path.Combine(cacheFolder, "data");
 
-            var saveFolder = StreamIdentifier<TId>.GetFolderPath(fileId);
+            var saveFolder = streamIdentifier.DirectoryManager.GetFolderPath(fileId);
             if (CrossDirectoryInfo.Current.Exists(saveFolder))
                 throw new Exception("directory exist!");
             CrossDirectoryInfo.Current.CreateDirectory(saveFolder);
@@ -56,13 +56,13 @@ namespace UltraStreamGo
             }
         }
 
-        internal static bool DeleteFolder(TId fileId)
+        internal static bool DeleteFolder(StreamIdentifier<TId> streamIdentifier, TId fileId)
         {
             try
             {
-                var saveFolder = StreamIdentifier<TId>.GetFolderPath(fileId);
+                var saveFolder = streamIdentifier.DirectoryManager.GetFilePath(fileId);
 
-                while (saveFolder.Length > StreamIdentifier<TId>.DefaultFolderPath.Length)
+                while (saveFolder.Length > streamIdentifier.DirectoryManager.DefaultFolderPath.Length)
                 {
                     if (CrossDirectoryInfo.Current.GetDirectories(saveFolder).Length == 0)
                         CrossDirectoryInfo.Current.Delete(saveFolder, true);
