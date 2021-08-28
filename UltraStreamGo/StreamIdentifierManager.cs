@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -8,7 +7,7 @@ namespace UltraStreamGo
 {
     public static class StreamIdentifierManager<TId>
     {
-        public static void MoveCacheToFile(StreamIdentifier<TId>  streamIdentifier,Guid cacheId, TId fileId)
+        public static void MoveCacheToFile(StreamIdentifier<TId> streamIdentifier, Guid cacheId, TId fileId)
         {
             var cacheFolder = StreamIdentifierCache.GetCachFolderPath(cacheId);
             var fileCachePath = Path.Combine(cacheFolder, "file");
