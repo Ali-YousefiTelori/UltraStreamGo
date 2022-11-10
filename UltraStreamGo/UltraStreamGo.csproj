@@ -1,14 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup Label="Globals">
-    <SccProjectName>SAK</SccProjectName>
-    <SccProvider>SAK</SccProvider>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
-  </PropertyGroup>
-
+  
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;</TargetFrameworks>
+    <PackageLicenseUrl>https://github.com/Ali-YousefiTelori/UltraStreamGo/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/Ali-YousefiTelori/UltraStreamGo</PackageProjectUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>UltraStreamGo</PackageId>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>UltraStreamGo</RootNamespace>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <!--<VersionPrefix>4.1</VersionPrefix>-->
+    <Version>1.0.0.0</Version>
+    <!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+    <!-- Optional: Build symbol package (.snupkg) to distribute the PDB containing Source Link -->
+    <IncludeSymbols>true</IncludeSymbols>
     <!--<TargetFramework>net45;netstandard1.6;netstandard2.0</TargetFramework>-->
   </PropertyGroup>
 
