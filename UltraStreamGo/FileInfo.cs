@@ -21,6 +21,6 @@ namespace UltraStreamGo
         public bool IsArchived { get; set; }
         public bool IsComplete { get; set; }
         public string Password { get; set; }
-        public bool IsUserDone { get; set; }
+        public bool IsUserDone { get; set; } = true;
     }
 }
